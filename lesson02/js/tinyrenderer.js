@@ -48,46 +48,46 @@
   };
 
   TinyRenderer.prototype.triangle = function (v0, v1, v2, color) {
-    if(v0.y === v1.y && v1.y === v2.y) return;
+    if(v0[1] === v1[1] && v1[1] === v2[1]) return;
 
     // sort v0 <= v1 <= v2
     var tmp;
-    if (v0.y > v1.y) {
+    if (v0[1] > v1[1]) {
       tmp = v1;
       v1 = v0;
       v0 = tmp;
     }
-    if (v0.y > v2.y) {
+    if (v0[1] > v2[1]) {
       tmp = v2;
       v2 = v0;
       v0 = tmp;
     }
-    if (v1.y > v2.y) {
+    if (v1[1] > v2[1]) {
       tmp = v2;
       v2 = v1;
       v1 = tmp;
     }
 
     // draw flat top triangle
-    if (v1.y === v2.y) {
+    if (v1[1] === v2[1]) {
       fillFlatTopTriangle.call(this, v0, v1, v2, color);
-    } else if (v0.y === v1.y) { // draw flat bottom
+    } else if (v0[1] === v1[1]) { // draw flat bottom
       fillFlatBottomTriangle.call(this, v0, v1, v2, color);
     } else { // general case
-      var v3 = {x: (v0.x + ((v1.y - v0.y) / (v2.y - v0.y)) * (v2.x - v0.x)), y: v1.y};
+      var v3 = vec2.fromValues((v0[0] + ((v1[1] - v0[1]) / (v2[1] - v0[1])) * (v2[0] - v0[0])), v1[1]);
       fillFlatTopTriangle.call(this, v0, v1, v3, color);
       fillFlatBottomTriangle.call(this, v1, v3, v2, color);
     }
   };
 
   function fillFlatBottomTriangle (v0, v1, v2, color) {
-    var invslope1 = (v2.x - v0.x) / (v2.y - v0.y);
-    var invslope2 = (v2.x - v1.x) / (v2.y - v1.y);
+    var invslope1 = (v2[0] - v0[0]) / (v2[1] - v0[1]);
+    var invslope2 = (v2[0] - v1[0]) / (v2[1] - v1[1]);
 
-    var x1 = v2.x;
-    var x2 = v2.x;
+    var x1 = v2[0];
+    var x2 = v2[0];
 
-    for (var y = v2.y; y > v0.y; y--) {
+    for (var y = v2[1]; y > v0[1]; y--) {
       x1 -= invslope1;
       x2 -= invslope2;
       this.line(x1, y, x2, y, this.imageData, color);
@@ -95,13 +95,13 @@
   }
 
   function fillFlatTopTriangle(v0, v1, v2, color) {
-    var invslope1 = (v0.x - v1.x) / (v0.y - v1.y); // flat top
-    var invslope2 = (v0.x - v2.x) / (v0.y - v2.y);
+    var invslope1 = (v0[0] - v1[0]) / (v0[1] - v1[1]); // flat top
+    var invslope2 = (v0[0] - v2[0]) / (v0[1] - v2[1]);
 
-    var x1 = v0.x;
-    var x2 = v0.x;
+    var x1 = v0[0];
+    var x2 = v0[0];
 
-    for (var y = v0.y; y <= v1.y; y++) {
+    for (var y = v0[1]; y <= v1[1]; y++) {
       this.line(x1, y, x2, y, this.imageData, color);
       x1 += invslope1;
       x2 += invslope2;
@@ -139,7 +139,7 @@
     return newImageData;
   };
 
-  TinyRenderer.prototype.getCanvasCoordinate = function (index, vertices, out ) {
+  TinyRenderer.prototype.getCanvasCoordinate = function (index, vertices) {
     var p = out || {};
     // x, y are normalized device coordinates between [-1,1]
     var x = vertices[index + 0];
@@ -178,28 +178,53 @@
 
   };
 
-  TinyRenderer.prototype.fillOBJ = function (mesh, color) {
+  TinyRenderer.prototype.getScreenCoordinate = function (world, out) {
+    // world coords are normalized device coordinates between [-1,1]
+    // add 1 to make coordinates be between [0,2]
+    // divide by 2 so coordinates are between [0,1]
+    // multiply width / height to scale object
+    // offset or scale could be added here by addition / multiplication
+    out[0] = Math.trunc((world[0] + 1) / 2 * this.canvas.width);
+    out[1] = Math.trunc((world[1] + 1) / 2 * this.canvas.height);
+  };
+
+  TinyRenderer.prototype.fillOBJ = function (mesh) {
     var length = mesh.indices.length;
-    var indices = mesh.indices;
-    var screen0 = {}, screen1 = {}, screen2 = {};
+    var indices = mesh.indices, vertices = mesh.vertices;
+    var index0, index1, index2;
+    var screen0 = vec2.create(), screen1 = vec2.create(), screen2 = vec2.create();
+    var world0 = vec3.create(), world1 = vec3.create(), world2 = vec3.create();
+    var light = vec3.fromValues(0, 0, -1), normal = vec3.create(), intensity;
     var color = [0, 0, 0, 255];
-    
 
     for (var i = 0; i < length; i += 3) {
-      var index0 = indices[i    ] * 3; // here vertices have 3 components x, y, z and we start always on x, so multiply by 3
-      var index1 = indices[i + 1] * 3; //  
-      var index2 = indices[i + 2] * 3;
+      index0 = indices[i    ] * 3; // here vertices have 3 components x, y, z and we start always on x, so multiply by 3
+      index1 = indices[i + 1] * 3;
+      index2 = indices[i + 2] * 3;
 
-      this.getCanvasCoordinate(index0, mesh.vertices, screen0); // get screen coordinate of first vertex
-      this.getCanvasCoordinate(index1, mesh.vertices, screen1); // get screen coordinate of second vertex
-      this.getCanvasCoordinate(index2, mesh.vertices, screen2); // get screen coordinate of second vertex
+      // world coordinates for vertices
+      vec3.set(world0, vertices[index0], vertices[index0 + 1], vertices[index0 + 2]);
+      vec3.set(world1, vertices[index1], vertices[index1 + 1], vertices[index1 + 2]);
+      vec3.set(world2, vertices[index2], vertices[index2 + 1], vertices[index2 + 2]);
 
+      // screen coordinates for vertices
+      this.getScreenCoordinate(world0, screen0);
+      this.getScreenCoordinate(world1, screen1);
+      this.getScreenCoordinate(world2, screen2);
 
-      for (var j = 0; j < 3; j++) {
-        color[j] = Math.floor(Math.random() * 255);
+      world0 = vec3.cross(world0, vec3.subtract(world2, world2, world0), vec3.subtract(world1, world1, world0));
+
+      vec3.normalize(normal, world0);
+
+      intensity = vec3.dot(normal, light);
+
+      if (intensity > 0) {
+        color[0] = 255 * intensity;
+        color[1] = 255 * intensity;
+        color[2] = 255 * intensity;
+        this.triangle(screen0, screen1, screen2, color);
       }
 
-      this.triangle(screen0, screen1, screen2, color);
     }
   };
 
