@@ -47,6 +47,67 @@
     }
   };
 
+  TinyRenderer.prototype.triangle = function (v0, v1, v2, color) {
+    if(v0.y === v1.y && v1.y === v2.y) return;
+
+    // sort v0 <= v1 <= v2
+    var tmp;
+    if (v0.y > v1.y) {
+      tmp = v1;
+      v1 = v0;
+      v0 = tmp;
+    }
+    if (v0.y > v2.y) {
+      tmp = v2;
+      v2 = v0;
+      v0 = tmp;
+    }
+    if (v1.y > v2.y) {
+      tmp = v2;
+      v2 = v1;
+      v1 = tmp;
+    }
+
+    // draw flat top triangle
+    if (v1.y === v2.y) {
+      fillFlatTopTriangle.call(this, v0, v1, v2, color);
+    } else if (v0.y === v1.y) { // draw flat bottom
+      fillFlatBottomTriangle.call(this, v0, v1, v2, color);
+    } else { // general case
+      var v3 = {x: (v0.x + ((v1.y - v0.y) / (v2.y - v0.y)) * (v2.x - v0.x)), y: v1.y};
+      fillFlatTopTriangle.call(this, v0, v1, v3, color);
+      fillFlatBottomTriangle.call(this, v1, v3, v2, color);
+    }
+  };
+
+  function fillFlatBottomTriangle (v0, v1, v2, color) {
+    var invslope1 = (v2.x - v0.x) / (v2.y - v0.y);
+    var invslope2 = (v2.x - v1.x) / (v2.y - v1.y);
+
+    var x1 = v2.x;
+    var x2 = v2.x;
+
+    for (var y = v2.y; y > v0.y; y--) {
+      x1 -= invslope1;
+      x2 -= invslope2;
+      this.line(x1, y, x2, y, this.imageData, color);
+    }
+  }
+
+  function fillFlatTopTriangle(v0, v1, v2, color) {
+    var invslope1 = (v0.x - v1.x) / (v0.y - v1.y); // flat top
+    var invslope2 = (v0.x - v2.x) / (v0.y - v2.y);
+
+    var x1 = v0.x;
+    var x2 = v0.x;
+
+    for (var y = v0.y; y <= v1.y; y++) {
+      this.line(x1, y, x2, y, this.imageData, color);
+      x1 += invslope1;
+      x2 += invslope2;
+    }
+  }
+
   TinyRenderer.prototype.flipVertically = function (imageData) {
     var newImageData = this.ctx.createImageData(imageData);
     var n = newImageData.data;
@@ -78,8 +139,8 @@
     return newImageData;
   };
 
-  TinyRenderer.prototype.getCanvasCoordinate = function (index, vertices) {
-    var p = {};
+  TinyRenderer.prototype.getCanvasCoordinate = function (index, vertices, out ) {
+    var p = out || {};
     // x, y are normalized device coordinates between [-1,1]
     var x = vertices[index + 0];
     var y = vertices[index + 1];
@@ -88,8 +149,8 @@
     // divide by 2 so coordinates are between [0,1]
     // multiply width / height to scale object
     // offset or scale could be added here by addition / multiplication
-    p.x = (x + 1) / 2 * this.canvas.width;
-    p.y = (y + 1) / 2 * this.canvas.height;
+    p.x = Math.trunc((x + 1) / 2 * this.canvas.width);
+    p.y = Math.trunc((y + 1) / 2 * this.canvas.height);
 
     return p;
   };
@@ -115,6 +176,31 @@
       }
     }
 
+  };
+
+  TinyRenderer.prototype.fillOBJ = function (mesh, color) {
+    var length = mesh.indices.length;
+    var indices = mesh.indices;
+    var screen0 = {}, screen1 = {}, screen2 = {};
+    var color = [0, 0, 0, 255];
+    
+
+    for (var i = 0; i < length; i += 3) {
+      var index0 = indices[i    ] * 3; // here vertices have 3 components x, y, z and we start always on x, so multiply by 3
+      var index1 = indices[i + 1] * 3; //  
+      var index2 = indices[i + 2] * 3;
+
+      this.getCanvasCoordinate(index0, mesh.vertices, screen0); // get screen coordinate of first vertex
+      this.getCanvasCoordinate(index1, mesh.vertices, screen1); // get screen coordinate of second vertex
+      this.getCanvasCoordinate(index2, mesh.vertices, screen2); // get screen coordinate of second vertex
+
+
+      for (var j = 0; j < 3; j++) {
+        color[j] = Math.floor(Math.random() * 255);
+      }
+
+      this.triangle(screen0, screen1, screen2, color);
+    }
   };
 
   if (typeof module !== 'undefined') {
