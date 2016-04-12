@@ -7,10 +7,10 @@
   var ctx = canvas.getContext("2d");
   canvas.width = 800;
   canvas.height = 800;
-  canvas.style.background = '#ddd';
+  canvas.style.background = '#fff';
   var imageData = ctx.createImageData(canvas.width, canvas.height);
 
-  //var black = [16, 16, 16, 255];
+  var black = [16, 16, 16, 255];
 
   var tga = new TGA({width: canvas.width, height: canvas.height, imageType: TGA.Type.RLE_RGB, flags: 8});
   var TR = new TinyRenderer(canvas, imageData);

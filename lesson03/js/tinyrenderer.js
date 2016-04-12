@@ -5,6 +5,8 @@
     this.canvas = canvas;
     this.ctx = canvas.getContext("2d");
     this.imageData = imageData;
+    this.zbuffer = new Float32Array(canvas.width * canvas.height);
+    this.zbuffer.fill(-100000000);
   }
 
   TinyRenderer.prototype.setPixel = function (x, y, imageData, color) {
@@ -47,8 +49,62 @@
     }
   };
 
+  TinyRenderer.prototype.btriangle = function (a, b, c, color) {
+    var v0 = vec3.subtract(vec3.create(), b, a);
+    var v1 = vec3.subtract(vec3.create(), c, a);
+    var v2 = vec3.create();
+
+    var denom = v0[0] * v1[1] - v1[0] * v0[1];
+
+    if (Math.abs(denom) <= glMatrix.EPSILON) {
+      return;
+    }
+
+    var getBarycentric = function (P, out) {
+      var u, v, w;
+      vec3.subtract(v2, P, a);
+
+      v = (v2[0] * v1[1] - v1[0] * v2[1]) / denom;
+      w = (v0[0] * v2[1] - v2[0] * v0[1]) / denom;
+      u = 1.0 - (v + w); // parenthesis seem to help against rounding issues
+
+      if (glMatrix.equals(u, 0)) {
+        u = 0;
+      }
+
+      vec3.set(out, u, v, w);
+    };
+
+    var maxX = Math.max(a[0], b[0], c[0]);
+    var minX = Math.min(a[0], b[0], c[0]);
+    var maxY = Math.max(a[1], b[1], c[1]);
+    var minY = Math.min(a[1], b[1], c[1]);
+    var P = vec3.create();
+    var B = vec3.create();
+    var z, zOffset;
+
+    for (var x = minX; x < maxX; x++) { // using < seems to help against z-fighting along edges
+      for (var y = minY; y < maxY; y++) { // using < seems to help against z-fighting along edges
+        vec3.set(P, x, y, 0);
+        getBarycentric(P, B);
+
+        if (B[0] < 0 || B[1] < 0 || B[2] < 0) {
+          continue;
+        }
+
+        z = (a[2] * B[0]) + (b[2] * B[1]) + (c[2] * B[2]);
+        zOffset = x + y * this.canvas.width;
+
+        if (z > this.zbuffer[zOffset]) {
+          this.zbuffer[zOffset] = z;
+          this.setPixel(x, y, this.imageData, color);
+        }
+      }
+    }
+  };
+
   TinyRenderer.prototype.triangle = function (v0, v1, v2, color) {
-    if(v0[1] === v1[1] && v1[1] === v2[1]) return;
+    if (v0[1] === v1[1] && v1[1] === v2[1]) return;
 
     // sort v0 <= v1 <= v2
     var tmp;
@@ -80,17 +136,17 @@
     }
   };
 
-  function fillFlatBottomTriangle (v0, v1, v2, color) {
+  function fillFlatBottomTriangle(v0, v1, v2, color) {
     var invslope1 = (v2[0] - v0[0]) / (v2[1] - v0[1]);
     var invslope2 = (v2[0] - v1[0]) / (v2[1] - v1[1]);
 
     var x1 = v2[0];
     var x2 = v2[0];
 
-    for (var y = v2[1]; y > v0[1]; y--) {
+    for (var y = v2[1]; y >= v0[1]; y--) {
+      this.line(x1, y, x2, y, this.imageData, color);
       x1 -= invslope1;
       x2 -= invslope2;
-      this.line(x1, y, x2, y, this.imageData, color);
     }
   }
 
@@ -186,19 +242,20 @@
     // offset or scale could be added here by addition / multiplication
     out[0] = Math.trunc((world[0] + 1) / 2 * this.canvas.width);
     out[1] = Math.trunc((world[1] + 1) / 2 * this.canvas.height);
+    out[2] = world[2];
   };
 
   TinyRenderer.prototype.fillOBJ = function (mesh) {
     var length = mesh.indices.length;
     var indices = mesh.indices, vertices = mesh.vertices;
     var index0, index1, index2;
-    var screen0 = vec2.create(), screen1 = vec2.create(), screen2 = vec2.create();
+    var screen0 = vec3.create(), screen1 = vec3.create(), screen2 = vec3.create();
     var world0 = vec3.create(), world1 = vec3.create(), world2 = vec3.create();
     var light = vec3.fromValues(0, 0, -1), normal = vec3.create(), intensity;
     var color = [0, 0, 0, 255];
 
     for (var i = 0; i < length; i += 3) {
-      index0 = indices[i    ] * 3; // here vertices have 3 components x, y, z and we start always on x, so multiply by 3
+      index0 = indices[i] * 3; // here vertices have 3 components x, y, z and we start always on x, so multiply by 3
       index1 = indices[i + 1] * 3;
       index2 = indices[i + 2] * 3;
 
@@ -220,7 +277,7 @@
 
       if (intensity > 0) {
         color[0] = color[1] = color[2] = 255 * intensity;
-        this.triangle(screen0, screen1, screen2, color);
+        this.btriangle(screen0, screen1, screen2, color);
       }
 
     }
