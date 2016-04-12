@@ -87,10 +87,10 @@
     var x1 = v2[0];
     var x2 = v2[0];
 
-    for (var y = v2[1]; y > v0[1]; y--) {
+    for (var y = v2[1]; y >= v0[1]; y--) {
+      this.line(x1, y, x2, y, this.imageData, color);
       x1 -= invslope1;
       x2 -= invslope2;
-      this.line(x1, y, x2, y, this.imageData, color);
     }
   }
 
