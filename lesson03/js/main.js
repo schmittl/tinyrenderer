@@ -7,25 +7,31 @@
   var ctx = canvas.getContext("2d");
   canvas.width = 800;
   canvas.height = 800;
-  canvas.style.background = '#fff';
+  canvas.style.background = '#000';
   var imageData = ctx.createImageData(canvas.width, canvas.height);
-
-  var black = [16, 16, 16, 255];
 
   var tga = new TGA({width: canvas.width, height: canvas.height, imageType: TGA.Type.RLE_RGB, flags: 8});
   var TR = new TinyRenderer(canvas, imageData);
 
-  OBJ.downloadMeshes({'head': '../models/head.obj'}, onLoad);
+  var texture = new TGA();
+  var textureData;
 
-  function onLoad(meshes) {
-    TR.fillOBJ(meshes.head);
+  texture.open("../models/head_diffuse.tga", function() {
+    textureData = ctx.createImageData(this.header.width, this.header.height);
+    this.getImageData(textureData);
 
-    var data = TR.flipVertically(imageData); // flip vertically to set origin to bottom left
-    ctx.putImageData(data, 0, 0);
-    tga.setImageData(data);
+    OBJ.downloadMeshes({'head': '../models/head.obj'}, function onLoad(meshes) {
+      TR.fillOBJ(meshes.head, textureData);
 
-    TR.addLink(pngLink);
-    tga.addLink(tgaLink);
-  }
+      var data = TR.flipVertically(imageData); // flip vertically to set origin to bottom left
+      ctx.putImageData(data, 0, 0);
+      tga.setImageData(data);
+
+      TR.addLink(pngLink);
+      tga.addLink(tgaLink);
+    });
+  });
+
+
 
 })();
