@@ -91,37 +91,6 @@
     }
   };
 
-  TinyRenderer.prototype.flipVertically = function (imageData) {
-    var newImageData = this.ctx.createImageData(imageData);
-    var n = newImageData.data;
-    var d = imageData.data;
-
-    // loop through over row of pixels
-    for (var row = 0; row < imageData.height; row++) {
-      // loop over every column
-      for (var col = 0; col < imageData.width; col++) {
-        var si, di, sp, dp;
-
-        // source pixel
-        sp = (imageData.width * row) + col;
-
-        // destination pixel
-        dp = (imageData.width * ((imageData.height - 1) - row)) + col;
-
-        // source and destination indexes, will always reference the red pixel
-        si = sp * 4;
-        di = dp * 4;
-
-        n[di] = d[si];     // red
-        n[di + 1] = d[si + 1]; // green
-        n[di + 2] = d[si + 2]; // blue
-        n[di + 3] = d[si + 3]; // alpha
-      }
-    }
-
-    return newImageData;
-  };
-
   TinyRenderer.prototype.addLink = function (el) {
     el.href = this.canvas.toDataURL('image/png');
     el.download = "generated.png";
@@ -133,7 +102,8 @@
   };
 
   TinyRenderer.prototype.setProjection = function(out, camera) {
-    out[11] = -1 / camera[2];
+    out[5]  = -1; // flip y axis
+    out[11] = -1 / camera[2]; // coefficient for perspective division  r = - 1 / camera.z
     return out;
   };
 

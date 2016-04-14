@@ -23,9 +23,8 @@
     OBJ.downloadMeshes({'head': '../models/head.obj'}, function onLoad(meshes) {
       TR.renderOBJ(meshes.head, textureData);
 
-      var data = TR.flipVertically(imageData); // flip vertically to set origin to bottom left
-      ctx.putImageData(data, 0, 0);
-      tga.setImageData(data);
+      ctx.putImageData(imageData, 0, 0);
+      tga.setImageData(imageData);
 
       TR.addLink(pngLink);
       tga.addLink(tgaLink);
