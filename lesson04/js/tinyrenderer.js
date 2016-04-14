@@ -5,8 +5,10 @@
     this.canvas = canvas;
     this.ctx = canvas.getContext("2d");
     this.imageData = imageData;
-    this.zbuffer = new Float32Array(canvas.width * canvas.height);
-    this.zbuffer.fill(-100000000);
+    this.zbuffer = new Int16Array(canvas.width * canvas.height);
+    this.zbuffer.fill(-32768);
+    this.zdepth = 32767;
+    this.camera = vec3.fromValues(0, 0, 3);
   }
 
   TinyRenderer.prototype.setPixel = function (x, y, imageData, color) {
@@ -125,15 +127,14 @@
     el.download = "generated.png";
   };
 
-  TinyRenderer.prototype.getScreenCoordinate = function (world, out) {
-    // world coords are normalized device coordinates between [-1,1]
-    // add 1 to make coordinates be between [0,2]
-    // divide by 2 so coordinates are between [0,1]
-    // multiply width / height to scale object
-    // offset or scale could be added here by addition / multiplication
-    out[0] = Math.trunc((world[0] + 1) / 2 * this.canvas.width);
-    out[1] = Math.trunc((world[1] + 1) / 2 * this.canvas.height);
-    out[2] = world[2];
+  TinyRenderer.prototype.setViewport = function (out, x, y, w, h, depth) {
+    // The translation components occupy the 13th, 14th, and 15th elements of the 16-element matrix
+    return mat4.set(out, w / 2, 0, 0, 0, 0, h / 2, 0, 0, 0, 0, depth / 2, 0, x + w /2, y + h / 2, depth / 2, 1);
+  };
+
+  TinyRenderer.prototype.setProjection = function(out, camera) {
+    out[11] = -1 / camera[2];
+    return out;
   };
 
   TinyRenderer.prototype.renderOBJ = function (mesh, textureData) {
@@ -144,6 +145,8 @@
     var world0 = vec3.create(), world1 = vec3.create(), world2 = vec3.create();
     var texture0 = vec2.create(), texture1 = vec2.create(), texture2 = vec2.create();
     var light = vec3.fromValues(0, 0, -1), normal = vec3.create(), intensity;
+    var viewport = this.setViewport(mat4.create(), 100, 100, 600, 600, this.zdepth);
+    var projection = this.setProjection(mat4.create(), this.camera);
 
     for (var i = 0; i < length; i += 3) {
       vindex0 = indices[i] * 3; // here vertices have 3 components x, y, z and we start always on x, so multiply by 3
@@ -159,10 +162,10 @@
       vec3.set(world1, vertices[vindex1], vertices[vindex1 + 1], vertices[vindex1 + 2]);
       vec3.set(world2, vertices[vindex2], vertices[vindex2 + 1], vertices[vindex2 + 2]);
 
-      // screen coordinates for vertices
-      this.getScreenCoordinate(world0, screen0);
-      this.getScreenCoordinate(world1, screen1);
-      this.getScreenCoordinate(world2, screen2);
+      // screen coordinates vertices (viewport * projection * world)
+      screen0 = vec3.trunc(vec3.transformMat4(vec3.transformMat4(screen0, world0, projection), screen0, viewport));
+      screen1 = vec3.trunc(vec3.transformMat4(vec3.transformMat4(screen1, world1, projection), screen1, viewport));
+      screen2 = vec3.trunc(vec3.transformMat4(vec3.transformMat4(screen2, world2, projection), screen2, viewport));
 
       // texture coordinates for vertices
       vec2.set(texture0, textures[tindex0], textures[tindex0 + 1]);
@@ -182,6 +185,18 @@
       }
 
     }
+  };
+
+  /**
+   * Truncates the decimal place
+   * @param out
+   * @returns {vec3}
+   */
+  vec3.trunc = function(out) {
+    out[0] = Math.trunc(out[0]);
+    out[1] = Math.trunc(out[1]);
+    out[2] = Math.trunc(out[2]);
+    return out;
   };
 
   if (typeof module !== 'undefined') {
