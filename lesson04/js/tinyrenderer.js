@@ -157,18 +157,6 @@
     }
   };
 
-  /**
-   * Truncates the decimal place
-   * @param out
-   * @returns {vec3}
-   */
-  vec3.trunc = function(out) {
-    out[0] = Math.trunc(out[0]);
-    out[1] = Math.trunc(out[1]);
-    out[2] = Math.trunc(out[2]);
-    return out;
-  };
-
   if (typeof module !== 'undefined') {
     module.exports = TinyRenderer;
   } else {
