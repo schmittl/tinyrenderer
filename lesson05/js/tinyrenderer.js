@@ -8,9 +8,9 @@
     this.zbuffer = new Int16Array(canvas.width * canvas.height);
     this.zbuffer.fill(-32768);
     this.zdepth = 32767;
-    this.camera = vec3.fromValues(0, 0, 3);
-    this.center = vec3.fromValues(0, 0, -1);
-    this.light = vec3.fromValues(1, 1, 1);
+    this.camera = vec3.fromValues(0.5, 0.5, 1.5);
+    this.center = vec3.fromValues(0, 0, 0);
+    this.light = vec3.fromValues(1, -1, 1);
     vec3.normalize(this.light, this.light);
   }
 
@@ -108,9 +108,13 @@
     return mat4.set(out, w / 2, 0, 0, 0, 0, h / 2, 0, 0, 0, 0, depth / 2, 0, x + w /2, y + h / 2, depth / 2, 1);
   };
 
-  TinyRenderer.prototype.setProjection = function(out, camera) {
-    out[5]  = -1; // flip y axis
-    out[11] = -1 / camera[2]; // coefficient for perspective division  r = - 1 / camera.z
+  TinyRenderer.prototype.setProjection = function(out) {
+    // eye - center
+    var distance = vec3.length(vec3.sub(vec3.create(), this.camera, this.center));
+    out[0]  = 1.5;
+    out[5]  = -1.5; // flip y axis
+    out[10]  = 1.5;
+    out[11] = -1 / distance; // coefficient for perspective division
     return out;
   };
 
@@ -125,12 +129,13 @@
     var intensity0, intensity1, intensity2;
     var faceNormal = vec3.create(), faceIntensity;
     var light = this.light;
-    var viewport = this.setViewport(mat4.create(), 100, 100, 600, 600, this.zdepth);
-    var projection = this.setProjection(mat4.create(), this.camera);
+    var viewport = this.setViewport(mat4.create(), 0, 0, this.canvas.width, this.canvas.height, this.zdepth);
+    var projection = this.setProjection(mat4.create());
+    var modelView = mat4.lookAt(mat4.create(), this.camera, this.center, vec3.fromValues(0, 1, 0));
 
     for (var i = 0; i < length; i += 3) {
       vindex0 = indices[i] * 3; // here vertices have 3 components x, y, z and we start always on x, so multiply by 3
-      vindex1 = indices[i + 1] * 3;
+      vindex1 = indices[i + 1] * 3; // vindex can also be used to lookup vertex normals
       vindex2 = indices[i + 2] * 3;
 
       tindex0 = indices[i] * 2; // only u, v for textures so multiply by 2
@@ -142,10 +147,10 @@
       vec3.set(world1, vertices[vindex1], vertices[vindex1 + 1], vertices[vindex1 + 2]);
       vec3.set(world2, vertices[vindex2], vertices[vindex2 + 1], vertices[vindex2 + 2]);
 
-      // screen coordinates vertices (viewport * projection * world)
-      screen0 = vec3.trunc(vec3.transformMat4(vec3.transformMat4(screen0, world0, projection), screen0, viewport));
-      screen1 = vec3.trunc(vec3.transformMat4(vec3.transformMat4(screen1, world1, projection), screen1, viewport));
-      screen2 = vec3.trunc(vec3.transformMat4(vec3.transformMat4(screen2, world2, projection), screen2, viewport));
+      // screen coordinates vertices (screen = viewport * projection * modelView * world)
+      screen0 = vec3.trunc(vec3.transformMat4(vec3.transformMat4(vec3.transformMat4(screen0, world0, modelView), screen0, projection), screen0, viewport));
+      screen1 = vec3.trunc(vec3.transformMat4(vec3.transformMat4(vec3.transformMat4(screen1, world1, modelView), screen1, projection), screen1, viewport));
+      screen2 = vec3.trunc(vec3.transformMat4(vec3.transformMat4(vec3.transformMat4(screen2, world2, modelView), screen2, projection), screen2, viewport));
 
       // texture coordinates for vertices
       vec2.set(texture0, textures[tindex0], textures[tindex0 + 1]);
@@ -169,7 +174,7 @@
       // calculate normal of triangle
       world0 = vec3.cross(world0, vec3.subtract(world2, world2, world0), vec3.subtract(world1, world1, world0));
       vec3.normalize(faceNormal, world0);
-      faceIntensity = vec3.dot(faceNormal, this.center); // backface culling uses view direction
+      faceIntensity = vec3.dot(faceNormal, vec3.subtract(world0, this.center, this.camera)); // backface culling uses view direction
 
       if (faceIntensity > 0) {
         this.triangle(screen0, screen1, screen2, texture0, texture1, texture2, intensity0, intensity1, intensity2, textureData);
