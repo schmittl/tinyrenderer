@@ -11,24 +11,33 @@
   var imageData = ctx.createImageData(canvas.width, canvas.height);
 
   var tga = new TGA({width: canvas.width, height: canvas.height, imageType: TGA.Type.RLE_RGB, flags: 8});
-  var TR = new TinyRenderer(canvas, imageData);
+  var renderer = new TR.TinyRenderer(canvas, imageData);
 
-  var texture = new TGA();
-  var textureData;
+  var camera = vec3.fromValues(0.5, 0.5, 1.5);
+  var center = vec3.fromValues(0, 0, 0);
+  var up = vec3.fromValues(0, 1, 0);
+  var light = vec3.fromValues(1, -1, 1);
+  vec3.normalize(light, light);
 
-  texture.open("../models/head_diffuse.tga", function() {
-    textureData = ctx.createImageData(this.header.width, this.header.height);
-    this.getImageData(textureData);
+  var viewport = renderer.getViewport(mat4.create(), 0, 0, canvas.width, canvas.height);
+  var projection = renderer.getProjection(mat4.create(), camera, center);
+  var modelView = mat4.lookAt(mat4.create(), camera, center, up);
 
-    OBJ.downloadMeshes({'head': '../models/head.obj'}, function onLoad(meshes) {
-      TR.renderOBJ(meshes.head, textureData);
+  var model = new TR.Model();
+  model.load('head', '../models/head.obj', onLoad);
 
+  function onLoad(mesh) {
+    model.loadTextures({diffuseMap: "../models/head_diffuse.tga"}, mesh, function (model) {
+      var shader = TR.Shader.Gouraud(model);
+      shader.setUniforms(modelView, projection, viewport, light);
+
+      renderer.renderModel(model, shader);
       ctx.putImageData(imageData, 0, 0);
       tga.setImageData(imageData);
 
-      TR.addLink(pngLink);
+      renderer.addLink(pngLink);
       tga.addLink(tgaLink);
     });
-  });
+  }
 
 })();
