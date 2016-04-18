@@ -58,8 +58,21 @@
   Model.prototype.getTexture = function (out, index) {
     var textures = this.mesh.textures;
     index *= 2;
-    vec3.set(out, textures[index], textures[index + 1], textures[index + 2]);
+    vec2.set(out, textures[index], textures[index + 1]);
     return out;
+  };
+
+  Model.prototype.getDiffuse = function (out, uv) {
+    getPixel(uv[0] * this.diffuseMap.width, (1 - uv[1]) * this.diffuseMap.height, this.diffuseMap, out);
+    return out;
+  };
+
+  var getPixel = function (x, y, imageData, color) {
+    var bytesPerPixel = color.length;
+    var offset = (Math.trunc(x) + imageData.width * Math.trunc(y)) * bytesPerPixel;
+    for (var i = 0; i < bytesPerPixel; i++) {
+      color[i] = imageData.data[offset + i];
+    }
   };
 
   if (typeof module !== 'undefined') {

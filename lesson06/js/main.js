@@ -13,10 +13,10 @@
   var tga = new TGA({width: canvas.width, height: canvas.height, imageType: TGA.Type.RLE_RGB, flags: 8});
   var renderer = new TR.TinyRenderer(canvas, imageData);
 
-  var camera = vec3.fromValues(0.5, 0.5, 1.5);
+  var camera = vec3.fromValues(1, 1, 3);
   var center = vec3.fromValues(0, 0, 0);
   var up = vec3.fromValues(0, 1, 0);
-  var light = vec3.fromValues(1, -1, 1);
+  var light = vec3.fromValues(1, 1, 1);
   vec3.normalize(light, light);
 
   var viewport = renderer.getViewport(mat4.create(), 0, 0, canvas.width, canvas.height);
@@ -28,7 +28,7 @@
 
   function onLoad(mesh) {
     model.loadTextures({diffuseMap: "../models/head_diffuse.tga"}, mesh, function (model) {
-      var shader = TR.Shader.Gouraud(model);
+      var shader = TR.Shader.GouraudTexture(model);
       shader.setUniforms(modelView, projection, viewport, light);
 
       renderer.renderModel(model, shader);
