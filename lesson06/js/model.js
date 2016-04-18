@@ -67,6 +67,15 @@
     return out;
   };
 
+  Model.prototype.getNormalMap = function (out, uv) {
+    getPixel(uv[0] * this.normalMap.width, (1 - uv[1]) * this.normalMap.height, this.normalMap, out);
+    // convert rgb to xyz in ndc
+    out[0] = out[0] / 255 * 2 - 1;
+    out[1] = out[1] / 255 * 2 - 1;
+    out[2] = out[2] / 255 * 2 - 1;
+    return out;
+  };
+
   var getPixel = function (x, y, imageData, color) {
     var bytesPerPixel = color.length;
     var offset = (Math.trunc(x) + imageData.width * Math.trunc(y)) * bytesPerPixel;

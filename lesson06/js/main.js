@@ -26,9 +26,14 @@
   var model = new TR.Model();
   model.load('head', '../models/head.obj', onLoad);
 
+  var textures = {
+    diffuseMap: "../models/head_diffuse.tga",
+    normalMap: "../models/head_normal.tga"
+  };
+
   function onLoad(mesh) {
-    model.loadTextures({diffuseMap: "../models/head_diffuse.tga"}, mesh, function (model) {
-      var shader = TR.Shader.GouraudTexture(model);
+    model.loadTextures(textures, mesh, function (model) {
+      var shader = TR.Shader.NormalMap(model);
       shader.setUniforms(modelView, projection, viewport, light);
 
       renderer.renderModel(model, shader);
