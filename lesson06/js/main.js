@@ -28,12 +28,13 @@
 
   var textures = {
     diffuseMap: "../models/head_diffuse.tga",
-    normalMap: "../models/head_normal.tga"
+    normalMap: "../models/head_normal.tga",
+    specularMap: "../models/head_specular.tga"
   };
 
   function onLoad(mesh) {
     model.loadTextures(textures, mesh, function (model) {
-      var shader = TR.Shader.NormalMap(model);
+      var shader = TR.Shader.SpecularMap(model);
       shader.setUniforms(modelView, projection, viewport, light);
 
       renderer.renderModel(model, shader);

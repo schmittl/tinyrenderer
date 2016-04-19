@@ -76,6 +76,11 @@
     return out;
   };
 
+  Model.prototype.getSpecularMap = function (out, uv) {
+    getPixel(uv[0] * this.specularMap.width, (1 - uv[1]) * this.specularMap.height, this.specularMap, out);
+    return out[0];
+  };
+
   var getPixel = function (x, y, imageData, color) {
     var bytesPerPixel = color.length;
     var offset = (Math.trunc(x) + imageData.width * Math.trunc(y)) * bytesPerPixel;

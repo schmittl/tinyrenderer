@@ -139,6 +139,57 @@
     }
   };
 
+  Shader.SpecularMap = function (model) {
+    var modelView, projection, viewport, light;
+    var uniform_M = mat4.create(), uniform_MIT = mat4.create();
+    var varying_uv = mat2d.createEmpty();
+    var uv = vec2.create();
+    var position = vec3.create(), normal = vec4.create(), texture = vec2.create();
+    var n = vec3.create(), l = vec3.create(), r = vec3.create();
+    var intensity;
+    var specular = vec4.create();
+
+    return {
+      vertex: function (index, nthvert) {
+        position = model.getVertex(position, index);
+        position = vec3.trunc(vec3.transformMat4(vec3.transformMat4(vec3.transformMat4(position, position, modelView), position, projection), position, viewport));
+        mat2d.setColumn(varying_uv, nthvert, model.getTexture(texture, index));
+        return position;
+      },
+      fragment: function (bary, color) {
+        vec2.transformMat2dVec3(uv, bary, varying_uv);
+        // transform normal Vector
+        model.getNormalMap(normal, uv);
+        vec3.transformMat4(n, normal, uniform_MIT);
+        vec3.normalize(n, n);
+        // transform light vector
+        vec3.transformMat4(l, light, uniform_MIT);
+        vec3.normalize(l, l);
+        // reflected light vector
+        vec3.subtract(r, vec3.scale(r, n, 2 * vec3.dot(n, l)), l);
+        vec3.normalize(r, r);
+        var spec = Math.pow(Math.max(r[2], 0.0), model.getSpecularMap(specular, uv));
+        // calculate intensity
+        intensity = Math.max(0, vec3.dot(n, l));
+        model.getDiffuse(color, uv);
+        for (var i = 0; i < 3; i++) {
+          // 5 for the ambient component, 1 for the diffuse component and .6 for the specular component
+          color[i] = Math.min(5 + color[i] * (intensity + .6 * spec), 255);
+        }
+
+        return false;
+      },
+      setUniforms: function (m, p, v, l) {
+        modelView = m;
+        projection = p;
+        viewport = v;
+        light = l;
+        uniform_M = mat4.multiply(uniform_M, m, p);
+        uniform_MIT = mat4.transpose(uniform_MIT, mat4.invert(uniform_MIT, uniform_M));
+      }
+    }
+  };
+
   if (typeof module !== 'undefined') {
     module.exports = Shader;
   } else {
