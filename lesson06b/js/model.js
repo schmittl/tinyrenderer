@@ -83,7 +83,7 @@
 
   var getPixel = function (x, y, imageData, color) {
     var bytesPerPixel = color.length;
-    var offset = (Math.trunc(x) + imageData.width * Math.trunc(y)) * bytesPerPixel;
+    var offset = (Math.trunc(x) + imageData.width * Math.trunc(y)) * 4; // imageData is always rgba
     for (var i = 0; i < bytesPerPixel; i++) {
       color[i] = imageData.data[offset + i];
     }

@@ -26,7 +26,7 @@
 
   var textures = {
     diffuseMap: "../models/head_diffuse.tga",
-    normalMap: "../models/head_normal.tga",
+    normalMap: "../models/head_normal_tangent.tga",
     specularMap: "../models/head_specular.tga"
   };
 
