@@ -39,9 +39,9 @@
   TinyRenderer.prototype.getProjection = function(out, eye, center) {
     // eye - center
     var distance = vec3.length(vec3.sub(vec3.create(), eye, center));
-    out[0]  = 1.5;
-    out[5]  = -1.5; // flip y axis
-    out[10]  = 1.5;
+    out[0]  = 1;
+    out[5]  = -1; // flip y axis
+    out[10]  = 1;
     out[11] = -1 / distance; // coefficient for perspective division
     return out;
   };
@@ -73,17 +73,18 @@
       vec3.set(out, u, v, w);
     };
 
-    var maxX = Math.max(a[0], b[0], c[0]);
-    var minX = Math.min(a[0], b[0], c[0]);
-    var maxY = Math.max(a[1], b[1], c[1]);
-    var minY = Math.min(a[1], b[1], c[1]);
+    var maxX = Math.trunc(Math.max(a[0], b[0], c[0]));
+    var minX = Math.trunc(Math.min(a[0], b[0], c[0]));
+    var maxY = Math.trunc(Math.max(a[1], b[1], c[1]));
+    var minY = Math.trunc(Math.min(a[1], b[1], c[1]));
     var P = vec3.create();
     var B = vec3.create();
     var z, zOffset;
-    var color = vec4.fromValues(0, 0, 0, 255);
+    var color = new Uint8Array(4);
+    color[3] = 255;
 
-    for (var x = minX; x < maxX; x++) { // using < seems to help against z-fighting along edges
-      for (var y = minY; y < maxY; y++) { // using < seems to help against z-fighting along edges
+    for (var x = minX; x <= maxX; x++) {
+      for (var y = minY; y <= maxY; y++) {
         vec3.set(P, x, y, 0);
         getBarycentric(P, B);
 

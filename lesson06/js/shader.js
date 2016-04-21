@@ -12,7 +12,7 @@
     return {
       vertex: function (index, nthvert) {
         position = model.getVertex(position, index);
-        position = vec3.trunc(vec3.transformMat4(vec3.transformMat4(vec3.transformMat4(position, position, modelView), position, projection), position, viewport));
+        position = vec3.transformMat4(vec3.transformMat4(vec3.transformMat4(position, position, modelView), position, projection), position, viewport);
         varying_intensity[nthvert] = Math.max(0, vec3.dot(model.getNormal(normal, index), light));
         return position;
       },
@@ -39,7 +39,7 @@
     return {
       vertex: function (index, nthvert) {
         position = model.getVertex(position, index);
-        position = vec3.trunc(vec3.transformMat4(vec3.transformMat4(vec3.transformMat4(position, position, modelView), position, projection), position, viewport));
+        position = vec3.transformMat4(vec3.transformMat4(vec3.transformMat4(position, position, modelView), position, projection), position, viewport);
         varying_intensity[nthvert] = Math.max(0, vec3.dot(model.getNormal(normal, index), light));
         return position;
       },
@@ -77,7 +77,7 @@
     return {
       vertex: function (index, nthvert) {
         position = model.getVertex(position, index);
-        position = vec3.trunc(vec3.transformMat4(vec3.transformMat4(vec3.transformMat4(position, position, modelView), position, projection), position, viewport));
+        position = vec3.transformMat4(vec3.transformMat4(vec3.transformMat4(position, position, modelView), position, projection), position, viewport);
         varying_intensity[nthvert] = Math.max(0, vec3.dot(model.getNormal(normal, index), light));
         mat2d.setColumn(varying_uv, nthvert, model.getTexture(texture, index));
         return position;
@@ -109,7 +109,7 @@
     return {
       vertex: function (index, nthvert) {
         position = model.getVertex(position, index);
-        position = vec3.trunc(vec3.transformMat4(vec3.transformMat4(vec3.transformMat4(position, position, modelView), position, projection), position, viewport));
+        position = vec3.transformMat4(vec3.transformMat4(vec3.transformMat4(position, position, modelView), position, projection), position, viewport);
         mat2d.setColumn(varying_uv, nthvert, model.getTexture(texture, index));
         return position;
       },
@@ -120,7 +120,7 @@
         vec3.transformMat4(n, normal, uniform_MIT);
         vec3.normalize(n, n);
         // transform light vector
-        vec3.transformMat4(l, light, uniform_MIT);
+        vec3.transformMat4(l, light, uniform_M);
         vec3.normalize(l, l);
         // calculate intensity
         intensity = Math.max(0, vec3.dot(n, l));
@@ -133,7 +133,7 @@
         projection = p;
         viewport = v;
         light = l;
-        uniform_M = mat4.multiply(uniform_M, m, p); // Projection * ModelView
+        uniform_M = mat4.multiply(uniform_M, p, m); // Projection * ModelView
         uniform_MIT = mat4.transpose(uniform_MIT, mat4.invert(uniform_MIT, uniform_M));
       }
     }
@@ -152,7 +152,7 @@
     return {
       vertex: function (index, nthvert) {
         position = model.getVertex(position, index);
-        position = vec3.trunc(vec3.transformMat4(vec3.transformMat4(vec3.transformMat4(position, position, modelView), position, projection), position, viewport));
+        position = vec3.transformMat4(vec3.transformMat4(vec3.transformMat4(position, position, modelView), position, projection), position, viewport);
         mat2d.setColumn(varying_uv, nthvert, model.getTexture(texture, index));
         return position;
       },
@@ -163,7 +163,7 @@
         vec3.transformMat4(n, normal, uniform_MIT);
         vec3.normalize(n, n);
         // transform light vector
-        vec3.transformMat4(l, light, uniform_MIT);
+        vec3.transformMat4(l, light, uniform_M);
         vec3.normalize(l, l);
         // reflected light vector
         vec3.subtract(r, vec3.scale(r, n, 2 * vec3.dot(n, l)), l);
@@ -184,7 +184,7 @@
         projection = p;
         viewport = v;
         light = l;
-        uniform_M = mat4.multiply(uniform_M, m, p);
+        uniform_M = mat4.multiply(uniform_M, p, m);
         uniform_MIT = mat4.transpose(uniform_MIT, mat4.invert(uniform_MIT, uniform_M));
       }
     }

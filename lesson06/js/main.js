@@ -19,9 +19,9 @@
   var light = vec3.fromValues(1, 1, 1);
   vec3.normalize(light, light);
 
-  var viewport = renderer.getViewport(mat4.create(), 0, 0, canvas.width, canvas.height);
+  var viewport = renderer.getViewport(mat4.create(), canvas.width / 8, canvas.width / 8, canvas.width * 3 / 4 , canvas.height * 3 / 4);
   var projection = renderer.getProjection(mat4.create(), camera, center);
-  var modelView = mat4.lookAt(mat4.create(), camera, center, up);
+  var modelView = mat4.lookAtCenter(mat4.create(), camera, center, up);
 
   var model = new TR.Model();
   model.load('head', '../models/head.obj', onLoad);
