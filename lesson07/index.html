@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>tiny renderer</title>
+    <style>
+        body {
+            background-color: #222;
+        }
+
+        #canvas {
+            display: block;
+            margin: 0 auto 15px;
+        }
+
+        #download {
+            text-align: center;
+        }
+
+        #download a {
+            margin-top: 10px;
+            padding: 10px 15px;
+            background: #111;
+            color: #eee;
+            text-decoration: none;
+            border-bottom: 1px solid #1ed36f;
+            font: bold 15px Lucida-Grande, sans-serif;
+        }
+    </style>
+</head>
+<body>
+<canvas id="canvas"></canvas>
+<div id="download">
+    <a id="png" download>Download .png</a>
+    <a id="tga" download>Download .tga</a>
+</div>
+<script src="../lib/tga.js"></script>
+<script src="../lib/obj-loader.js"></script>
+<script src="../lib/gl-matrix.js"></script>
+<script src="js/model.js"></script>
+<script src="js/shader.js"></script>
+<script src="js/tinyrenderer.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>
