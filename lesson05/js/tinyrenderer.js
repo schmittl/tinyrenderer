@@ -63,8 +63,10 @@
     var P = vec3.create();
     var B = vec3.create();
     var z, zOffset;
-    var u, v, textureColor = vec4.fromValues(0, 0, 0, 255);
+    var u, v;
     var intensity;
+    var textureColor = new Uint8Array(4);
+    textureColor[3] = 255;
 
     for (var x = minX; x < maxX; x++) { // using < seems to help against z-fighting along edges
       for (var y = minY; y < maxY; y++) { // using < seems to help against z-fighting along edges
@@ -77,6 +79,7 @@
 
         // calculate intensity of pixel
         intensity = (i0 * B[0]) + (i1 * B[1]) + (i2 * B[2]);
+        intensity = Math.max(0, intensity); // clamp negative values to zero
 
         // calculate u by multiplying Barycenter weights with x values of texture coordinates
         u = (t0[0] * B[0]) + (t1[0] * B[1]) + (t2[0] * B[2]);
@@ -132,6 +135,10 @@
     var viewport = this.setViewport(mat4.create(), 0, 0, this.canvas.width, this.canvas.height, this.zdepth);
     var projection = this.setProjection(mat4.create());
     var modelView = mat4.lookAt(mat4.create(), this.camera, this.center, vec3.fromValues(0, 1, 0));
+    var viewDirection = vec3.create();
+    vec3.subtract(viewDirection, this.center, this.camera);
+    vec3.normalize(viewDirection, viewDirection);
+
 
     for (var i = 0; i < length; i += 3) {
       vindex0 = indices[i] * 3; // here vertices have 3 components x, y, z and we start always on x, so multiply by 3
@@ -174,7 +181,7 @@
       // calculate normal of triangle
       world0 = vec3.cross(world0, vec3.subtract(world2, world2, world0), vec3.subtract(world1, world1, world0));
       vec3.normalize(faceNormal, world0);
-      faceIntensity = vec3.dot(faceNormal, vec3.subtract(world0, this.center, this.camera)); // backface culling uses view direction
+      faceIntensity = vec3.dot(faceNormal, viewDirection); // backface culling uses view direction
 
       if (faceIntensity > 0) {
         this.triangle(screen0, screen1, screen2, texture0, texture1, texture2, intensity0, intensity1, intensity2, textureData);

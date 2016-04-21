@@ -195,7 +195,8 @@
     var screen0 = vec2.create(), screen1 = vec2.create(), screen2 = vec2.create();
     var world0 = vec3.create(), world1 = vec3.create(), world2 = vec3.create();
     var light = vec3.fromValues(0, 0, -1), normal = vec3.create(), intensity;
-    var color = [0, 0, 0, 255];
+    var color = new Uint8Array(4);
+    color[3] = 255;
 
     for (var i = 0; i < length; i += 3) {
       index0 = indices[i    ] * 3; // here vertices have 3 components x, y, z and we start always on x, so multiply by 3

@@ -93,7 +93,8 @@
     var P = vec3.create();
     var B = vec3.create(), BC = vec3.create();
     var z, zOffset;
-    var color = vec4.fromValues(0, 0, 0, 255);
+    var color = new Uint8Array(4);
+    color[3] = 255;
 
     for (var x = minX; x <= maxX; x++) {
       for (var y = minY; y <= maxY; y++) {

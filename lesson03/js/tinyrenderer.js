@@ -90,7 +90,8 @@
     var P = vec3.create();
     var B = vec3.create();
     var z, zOffset;
-    var u, v, textureColor = vec4.fromValues(0, 0, 0, 255);
+    var u, v, textureColor = new Uint8Array(4);
+    textureColor[3] = 255;
 
     for (var x = minX; x < maxX; x++) { // using < seems to help against z-fighting along edges
       for (var y = minY; y < maxY; y++) { // using < seems to help against z-fighting along edges
