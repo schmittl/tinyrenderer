@@ -8,7 +8,7 @@
     this.zbuffer = new Int16Array(canvas.width * canvas.height);
     this.zbuffer.fill(-32768);
     this.zdepth = 32767;
-    this.camera = vec3.fromValues(0.5, 0.5, 1.5);
+    this.camera = vec3.fromValues(1, 1, 3);
     this.center = vec3.fromValues(0, 0, 0);
     this.light = vec3.fromValues(1, -1, 1);
     vec3.normalize(this.light, this.light);
@@ -114,9 +114,9 @@
   TinyRenderer.prototype.setProjection = function(out) {
     // eye - center
     var distance = vec3.length(vec3.sub(vec3.create(), this.camera, this.center));
-    out[0]  = 1.5;
-    out[5]  = -1.5; // flip y axis
-    out[10]  = 1.5;
+    out[0]  = 1;
+    out[5]  = -1; // flip y axis
+    out[10]  = 1;
     out[11] = -1 / distance; // coefficient for perspective division
     return out;
   };
@@ -132,9 +132,9 @@
     var intensity0, intensity1, intensity2;
     var faceNormal = vec3.create(), faceIntensity;
     var light = this.light;
-    var viewport = this.setViewport(mat4.create(), 0, 0, this.canvas.width, this.canvas.height, this.zdepth);
+    var viewport = this.setViewport(mat4.create(), this.canvas.width / 8, this.canvas.height / 8, this.canvas.width * 3 / 4, this.canvas.height * 3 / 4, this.zdepth);
     var projection = this.setProjection(mat4.create());
-    var modelView = mat4.lookAt(mat4.create(), this.camera, this.center, vec3.fromValues(0, 1, 0));
+    var modelView = mat4.lookAtCenter(mat4.create(), this.camera, this.center, vec3.fromValues(0, 1, 0));
     var viewDirection = vec3.create();
     vec3.subtract(viewDirection, this.center, this.camera);
     vec3.normalize(viewDirection, viewDirection);
