@@ -1,0 +1,21 @@
+html, body {
+  color: #eee;
+  background-color: #333;
+  font: 15px Lucida-Grande, sans-serif;
+  width: 600px;
+  margin: 10px auto;
+}
+
+h1, #source {
+  text-align: center;
+}
+
+p {
+  text-align: justify;
+}
+
+a {
+  color: #1ed36f;
+  text-decoration: none;
+  font-weight: bold;
+}

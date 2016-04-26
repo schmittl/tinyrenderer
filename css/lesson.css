@@ -1,0 +1,23 @@
+body {
+  margin: 0;
+  background-color: #222;
+}
+
+#canvas {
+  display: block;
+  margin: 15px auto;
+}
+
+#download {
+  text-align: center;
+}
+
+#download a {
+  margin-top: 10px;
+  padding: 10px 15px;
+  background: #111;
+  color: #eee;
+  text-decoration: none;
+  border-bottom: 1px solid #1ed36f;
+  font: bold 15px Lucida-Grande, sans-serif;
+}
